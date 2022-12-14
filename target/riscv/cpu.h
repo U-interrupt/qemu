@@ -49,6 +49,9 @@
 #define TYPE_RISCV_CPU_SIFIVE_U54       RISCV_CPU_TYPE_NAME("sifive-u54")
 #define TYPE_RISCV_CPU_HOST             RISCV_CPU_TYPE_NAME("host")
 
+/* RISC-V N CPU */
+#define TYPE_RISCV_CPU_RV64GCSU_N       RISCV_CPU_TYPE_NAME("rvgcsu-n")
+
 #if defined(TARGET_RISCV32)
 # define TYPE_RISCV_CPU_BASE            TYPE_RISCV_CPU_BASE32
 #elif defined(TARGET_RISCV64)
@@ -69,6 +72,9 @@
 #define RVU RV('U')
 #define RVH RV('H')
 #define RVJ RV('J')
+
+/* A new N-extension for user interrupt emulation */
+#define RVN RV('N')
 
 /* S extension denotes that Supervisor mode exists, however it is possible
    to have a core that support S mode but does not have an MMU and there
@@ -113,6 +119,7 @@ FIELD(VTYPE, VMA, 7, 1)
 FIELD(VTYPE, VEDIV, 8, 2)
 FIELD(VTYPE, RESERVED, 10, sizeof(target_ulong) * 8 - 11)
 
+// CPU 状态，在这里增加硬件寄存器
 struct CPUArchState {
     target_ulong gpr[32];
     target_ulong gprh[32]; /* 64 top bits of the 128-bit registers */
@@ -191,6 +198,14 @@ struct CPUArchState {
     target_ulong mepc;
     target_ulong mcause;
     target_ulong mtval;  /* since: priv-1.10.0 */
+
+    target_ulong utvec;
+    target_ulong uscratch;
+    target_ulong uepc;
+    target_ulong ucause;
+    target_ulong utval;
+    target_ulong sedeleg;
+    target_ulong sideleg;
 
     /* Machine and Supervisor interrupt priorities */
     uint8_t miprio[64];
@@ -351,6 +366,7 @@ struct RISCVCPUConfig {
     bool ext_h;
     bool ext_j;
     bool ext_v;
+    bool ext_n;
     bool ext_zba;
     bool ext_zbb;
     bool ext_zbc;

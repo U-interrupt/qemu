@@ -1185,6 +1185,7 @@ void gen_intermediate_code(CPUState *cs, TranslationBlock *tb, int max_insns)
     translator_loop(&riscv_tr_ops, &ctx.base, cs, tb, max_insns);
 }
 
+/// @brief 指令翻译初始化
 void riscv_translate_init(void)
 {
     int i;

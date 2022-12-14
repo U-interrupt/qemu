@@ -188,6 +188,17 @@ static void rv128_base_cpu_init(Object *obj)
     /* We set this in the realise function */
     set_misa(env, MXL_RV128, 0);
 }
+
+/* Initialize a new RVN CPU */
+static void rv64gcsu_n_cpu_init(Object* obj) {
+    CPURISCVState* env = &RISCV_CPU(pbj)->env;
+    set_misa(env, MXL_RV64 | RVI | RVM | RVA | RVF | RVD | RVC | RVS | RVU | RVN);
+    set_priv_version(env, PRIV_VERSION_1_10_0);
+    set_resetvec(env, DEFAULT_RSTVEC);
+    set_feature(env, RISCV_FEATURE_MMU);
+    set_feature(env, RISCV_FEATURE_PMP);
+}
+
 #else
 static void rv32_base_cpu_init(Object *obj)
 {
@@ -283,24 +294,31 @@ static void riscv_cpu_dump_state(CPUState *cs, FILE *f, int flags)
             CSR_MIP,
             CSR_MIE,
             CSR_MIDELEG,
-            CSR_HIDELEG,
+            CSR_HIDELEG
+            CSR_SIDELEG,
             CSR_MEDELEG,
-            CSR_HEDELEG,
+            CSR_HEDELEG
+            CSR_SEDELEG,
             CSR_MTVEC,
             CSR_STVEC,
             CSR_VSTVEC,
+            CSR_UTVEC,
             CSR_MEPC,
             CSR_SEPC,
             CSR_VSEPC,
+            CSR_UEPC,
             CSR_MCAUSE,
             CSR_SCAUSE,
             CSR_VSCAUSE,
+            CSR_UCAUSE,
             CSR_MTVAL,
             CSR_STVAL,
             CSR_HTVAL,
             CSR_MTVAL2,
+            CSR_UTVAL,
             CSR_MSCRATCH,
             CSR_SSCRATCH,
+            CSR_USCRATCH,
             CSR_SATP,
             CSR_MMTE,
             CSR_UPMBASE,
@@ -623,6 +641,9 @@ static void riscv_cpu_realize(DeviceState *dev, Error **errp)
         if (cpu->cfg.ext_h) {
             ext |= RVH;
         }
+        if (cpu->cfg.ext_n) {
+            ext |= RVN;
+        }
         if (cpu->cfg.ext_v) {
             int vext_version = VEXT_VERSION_1_00_0;
             ext |= RVV;
@@ -771,6 +792,7 @@ static Property riscv_cpu_properties[] = {
     DEFINE_PROP_BOOL("u", RISCVCPU, cfg.ext_u, true),
     DEFINE_PROP_BOOL("v", RISCVCPU, cfg.ext_v, false),
     DEFINE_PROP_BOOL("h", RISCVCPU, cfg.ext_h, true),
+    DEFINE_PROP_BOOL("n", RISCVCPU, cfg.ext_n, true),
     DEFINE_PROP_BOOL("Counters", RISCVCPU, cfg.ext_counters, true),
     DEFINE_PROP_BOOL("Zifencei", RISCVCPU, cfg.ext_ifencei, true),
     DEFINE_PROP_BOOL("Zicsr", RISCVCPU, cfg.ext_icsr, true),
@@ -976,6 +998,7 @@ static const TypeInfo riscv_cpu_type_infos[] = {
     DEFINE_CPU(TYPE_RISCV_CPU_SIFIVE_U54,       rv64_sifive_u_cpu_init),
     DEFINE_CPU(TYPE_RISCV_CPU_SHAKTI_C,         rv64_sifive_u_cpu_init),
     DEFINE_CPU(TYPE_RISCV_CPU_BASE128,          rv128_base_cpu_init),
+    DEFINE_CPU(TYPE_RISCV_CPU_RV64GCSU_N, rv64gcsu_n_cpu_init),
 #endif
 };
 
