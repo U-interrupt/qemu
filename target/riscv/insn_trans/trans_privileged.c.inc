@@ -68,6 +68,14 @@ static bool trans_ebreak(DisasContext *ctx, arg_ebreak *a)
 
 static bool trans_uret(DisasContext *ctx, arg_uret *a)
 {
+#ifndef CONFIG_USER_ONLY
+    if (has_ext(ctr, RVN)) {
+        gen_helper_uret(cpu_pc, cpu_env);
+        tcg_gen_exit_tb(NULL, 0); /* no chaining */
+        ctx->base.is_jmp = DISAS_NORETURN;
+        return true;
+    }
+#endif
     return false;
 }
 

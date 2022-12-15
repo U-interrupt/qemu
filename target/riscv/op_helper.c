@@ -116,6 +116,26 @@ target_ulong helper_csrrw_i128(CPURISCVState *env, int csr,
 
 #ifndef CONFIG_USER_ONLY
 
+target_ulong helper_uret(CPURISCVState *env)
+{
+    if (env->priv != PRV_U) {
+        riscv_raise_exception(env, RISCV_EXCP_ILLEGAL_INST, GETPC());
+    }
+
+    target_ulong retpc = env->upec;
+    if (!riscv_has_ext(env, RVC) && (retpc & 0x3)) {
+        riscv_raise_exception(env, RISCV_EXCP_INST_ADDR_MIS, GETPC());
+    }
+    
+    uint64_t mstatus = env->mstatus;
+    mstatus = set_field(mstatus, MSTATUS_UIE, get_field(mstatus, MSTATUS_UPIE));
+    mstatus = set_field(mstatus, MSTATUS_UPIE, 1);
+    env->mstatus = mstatus; 
+
+    riscv_cpu_set_mode(env, PRV_U);
+    return retpc;
+}
+
 target_ulong helper_sret(CPURISCVState *env)
 {
     uint64_t mstatus;
