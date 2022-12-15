@@ -378,7 +378,7 @@ int riscv_cpu_vsirq_pending(CPURISCVState *env)
 static int riscv_cpu_local_irq_pending(CPURISCVState *env)
 {
     int virq;
-    uint64_t irqs, pending, mie, hsie, vsie;
+    uint64_t irqs, pending, mie, hsie, vsie, uie;
 
     /* Determine interrupt enable state of all privilege modes */
     if (riscv_cpu_virt_enabled(env)) {
@@ -417,6 +417,15 @@ static int riscv_cpu_local_irq_pending(CPURISCVState *env)
         virq = riscv_cpu_pending_to_irq(env, IRQ_S_EXT, IPRIO_DEFAULT_S,
                                         irqs >> 1, env->hviprio);
         return (virq <= 0) ? virq : virq + 1;
+    }
+
+    /* Enable user interrupt */
+    uie = env->priv == PRV_U && get_field(env->mstatus, MSTATUS_UIE);
+    /* Check U-mode interrupts */
+    irqs = pending & env->sideleg & -uie;
+    if (irqs) {
+        // TODO: AIA is not supported
+        return riscv_cpu_pending_to_irq(env, IRQ_U_EXT, IPRIO_MMAXIPRIO, irqs, NULL);
     }
 
     /* Indicate no pending interrupt */
@@ -1339,6 +1348,7 @@ void riscv_cpu_do_interrupt(CPUState *cs)
     bool async = !!(cs->exception_index & RISCV_EXCP_INT_FLAG);
     target_ulong cause = cs->exception_index & RISCV_EXCP_INT_MASK;
     uint64_t deleg = async ? env->mideleg : env->medeleg;
+    uint64_t sdeleg = async ? env->sideleg : env->sedeleg;
     target_ulong tval = 0;
     target_ulong htval = 0;
     target_ulong mtval2 = 0;
@@ -1401,7 +1411,20 @@ void riscv_cpu_do_interrupt(CPUState *cs)
                   __func__, env->mhartid, async, cause, env->pc, tval,
                   riscv_cpu_get_trap_name(cause, async));
 
-    if (env->priv <= PRV_S &&
+    if riscv_has_ext(env, RVN) && env->priv == PRV_U &&
+            cause < TARGET_LONG_BITS && ((sdeleg >> cause) & 1) {
+        s = env->mstatus;
+        s = set_field(s, MSTATUS_UPIE, get_field(s, MSTATUS_UIE));
+        s = set_field(s, MSTATUS_UIE, 0);
+        env->mstatus = s;
+        env->ucause = cause | ((target_ulong)async << (TARGET_LONG_BITS - 1));
+        env->uepc = env->pc;
+        env->utval = tval;
+        // direct or vector
+        env->pc = (env->utvec >> 2 << 2) + 
+            ((async && (env->utvec & 3) == 1) ? cause * 4 : 0);
+        riscv_cpu_set_mode(env, PRV_U);
+    } else if (env->priv <= PRV_S &&
             cause < TARGET_LONG_BITS && ((deleg >> cause) & 1)) {
         /* handle the trap in S-mode */
         if (riscv_has_ext(env, RVH)) {

@@ -551,6 +551,7 @@ static const uint64_t delegable_ints = S_MODE_INTERRUPTS |
                                         VS_MODE_INTERRUPTS |
                                         U_MODE_INTERRUPTS;
 static const uint64_t vs_delegable_ints = VS_MODE_INTERRUPTS;
+static const uint64_t u_delegable_ints = U_MODE_INTERRUPTS;
 static const uint64_t all_ints = M_MODE_INTERRUPTS | S_MODE_INTERRUPTS |
                                      HS_MODE_INTERRUPTS | U_MODE_INTERRUPTS;
 #define DELEGABLE_EXCPS ((1ULL << (RISCV_EXCP_INST_ADDR_MIS)) | \
@@ -673,7 +674,8 @@ static RISCVException write_mstatus(CPURISCVState *env, int csrno,
             MSTATUS_MPRV | MSTATUS_SUM)) {
         tlb_flush(env_cpu(env));
     }
-    mask = MSTATUS_SIE | MSTATUS_SPIE | MSTATUS_MIE | MSTATUS_MPIE |
+    mask = MSTATUS_UIE | MSTATUS_UPIE |
+        MSTATUS_SIE | MSTATUS_SPIE | MSTATUS_MIE | MSTATUS_MPIE |
         MSTATUS_SPP | MSTATUS_MPRV | MSTATUS_SUM |
         MSTATUS_MPP | MSTATUS_MXR | MSTATUS_TVM | MSTATUS_TSR |
         MSTATUS_TW | MSTATUS_VS;
@@ -1571,7 +1573,7 @@ static RISCVException rmw_sie64(CPURISCVState *env, int csrno,
                                 uint64_t new_val, uint64_t wr_mask)
 {
     RISCVException ret;
-    uint64_t mask = env->mideleg & S_MODE_INTERRUPTS;
+    uint64_t mask = env->mideleg & (S_MODE_INTERRUPTS | U_MODE_INTERRUPTS);
 
     if (riscv_cpu_virt_enabled(env)) {
         if (env->hvictl & HVICTL_VTI) {
@@ -1799,7 +1801,7 @@ static RISCVException rmw_sip64(CPURISCVState *env, int csrno,
     }
 
     if (ret_val) {
-        *ret_val &= env->mideleg & S_MODE_INTERRUPTS;
+        *ret_val &= env->mideleg & (S_MODE_INTERRUPTS | U_MODE_INTERRUPTS);
     }
 
     return ret;
@@ -2089,7 +2091,7 @@ static int rmw_uip(CPURISCVState *env, int csrno, target_ulong *ret_value,
     ret = rmw_mip(env, CSR_MSTATUS, ret_value, new_value,
                   write_mask & env->sideleg & uip_writable_mask);
 
-    *ret_value &= env->sideleg;
+    *ret_value &= deleg;
     return ret;
 }
 
@@ -2113,7 +2115,7 @@ static int read_sedeleg(CPURISCVState *env, int csrno, target_ulong *val)
 
 static int write_sedeleg(CPURISCVState *env, int csrno, target_ulong val)
 {
-    env->sedeleg = val;
+    env->sedeleg = (env->sedeleg & ~DELEGABLE_EXCPS) | (val & DELEGABLE_EXCPS);
     return 0;
 }
 
@@ -2121,7 +2123,7 @@ static RISCVException rmw_sideleg(CPURISCVState *env, int csrno,
                                   target_ulong *ret_val,
                                   target_ulong new_val, target_ulong wr_mask)
 {
-    uint64_t mask = wr_mask & delegable_ints;
+    uint64_t mask = wr_mask & u_delegable_ints;
     if (ret_val) {
         *ret_val = env->sideleg;
     }
