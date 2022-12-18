@@ -191,12 +191,11 @@ static void rv128_base_cpu_init(Object *obj)
 
 /* Initialize a new RVN CPU */
 static void rv64gcsu_n_cpu_init(Object* obj) {
-    CPURISCVState* env = &RISCV_CPU(pbj)->env;
-    set_misa(env, MXL_RV64 | RVI | RVM | RVA | RVF | RVD | RVC | RVS | RVU | RVN);
+    CPURISCVState* env = &RISCV_CPU(obj)->env;
+    set_misa(env, MXL_RV64, RVI | RVM | RVA | RVF | RVD | RVC | RVS | RVU | RVN);
     set_priv_version(env, PRIV_VERSION_1_10_0);
     set_resetvec(env, DEFAULT_RSTVEC);
-    set_feature(env, RISCV_FEATURE_MMU);
-    set_feature(env, RISCV_FEATURE_PMP);
+    // MMU PMP features
 }
 
 #else
@@ -294,10 +293,10 @@ static void riscv_cpu_dump_state(CPUState *cs, FILE *f, int flags)
             CSR_MIP,
             CSR_MIE,
             CSR_MIDELEG,
-            CSR_HIDELEG
+            CSR_HIDELEG,
             CSR_SIDELEG,
             CSR_MEDELEG,
-            CSR_HEDELEG
+            CSR_HEDELEG,
             CSR_SEDELEG,
             CSR_MTVEC,
             CSR_STVEC,
@@ -506,6 +505,7 @@ static void riscv_cpu_disas_set_info(CPUState *s, disassemble_info *info)
 
 static void riscv_cpu_realize(DeviceState *dev, Error **errp)
 {
+    qemu_log("Realizing RISC-V CPU ...\n");
     CPUState *cs = CPU(dev);
     RISCVCPU *cpu = RISCV_CPU(dev);
     CPURISCVState *env = &cpu->env;
@@ -642,6 +642,7 @@ static void riscv_cpu_realize(DeviceState *dev, Error **errp)
             ext |= RVH;
         }
         if (cpu->cfg.ext_n) {
+            qemu_log("RISC-V N implemented\n");
             ext |= RVN;
         }
         if (cpu->cfg.ext_v) {
@@ -998,7 +999,7 @@ static const TypeInfo riscv_cpu_type_infos[] = {
     DEFINE_CPU(TYPE_RISCV_CPU_SIFIVE_U54,       rv64_sifive_u_cpu_init),
     DEFINE_CPU(TYPE_RISCV_CPU_SHAKTI_C,         rv64_sifive_u_cpu_init),
     DEFINE_CPU(TYPE_RISCV_CPU_BASE128,          rv128_base_cpu_init),
-    DEFINE_CPU(TYPE_RISCV_CPU_RV64GCSU_N, rv64gcsu_n_cpu_init),
+    DEFINE_CPU(TYPE_RISCV_CPU_RV64GCSU_N,       rv64gcsu_n_cpu_init),
 #endif
 };
 

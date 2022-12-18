@@ -117,12 +117,12 @@ target_ulong helper_csrrw_i128(CPURISCVState *env, int csr,
 #ifndef CONFIG_USER_ONLY
 
 target_ulong helper_uret(CPURISCVState *env)
-{
+{    
     if (env->priv != PRV_U) {
         riscv_raise_exception(env, RISCV_EXCP_ILLEGAL_INST, GETPC());
     }
 
-    target_ulong retpc = env->upec;
+    target_ulong retpc = env->uepc;
     if (!riscv_has_ext(env, RVC) && (retpc & 0x3)) {
         riscv_raise_exception(env, RISCV_EXCP_INST_ADDR_MIS, GETPC());
     }

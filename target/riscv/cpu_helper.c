@@ -1170,6 +1170,7 @@ void riscv_cpu_do_unaligned_access(CPUState *cs, vaddr addr,
     CPURISCVState *env = &cpu->env;
     switch (access_type) {
     case MMU_INST_FETCH:
+        qemu_log("FETCH %lX", addr);
         cs->exception_index = RISCV_EXCP_INST_ADDR_MIS;
         break;
     case MMU_DATA_LOAD:
@@ -1368,7 +1369,6 @@ void riscv_cpu_do_interrupt(CPUState *cs)
         case RISCV_EXCP_INST_GUEST_PAGE_FAULT:
         case RISCV_EXCP_LOAD_GUEST_ACCESS_FAULT:
         case RISCV_EXCP_STORE_GUEST_AMO_ACCESS_FAULT:
-        case RISCV_EXCP_INST_ADDR_MIS:
         case RISCV_EXCP_INST_ACCESS_FAULT:
         case RISCV_EXCP_LOAD_ADDR_MIS:
         case RISCV_EXCP_STORE_AMO_ADDR_MIS:
@@ -1377,6 +1377,12 @@ void riscv_cpu_do_interrupt(CPUState *cs)
         case RISCV_EXCP_INST_PAGE_FAULT:
         case RISCV_EXCP_LOAD_PAGE_FAULT:
         case RISCV_EXCP_STORE_PAGE_FAULT:
+            write_gva = true;
+            tval = env->badaddr;
+            break;
+        case RISCV_EXCP_INST_ADDR_MIS:
+            qemu_log("PC=0x%lx\n", env->pc);
+            qemu_log("INST_ADDR_MIS: 0x%lx\n", env->badaddr);
             write_gva = true;
             tval = env->badaddr;
             break;
@@ -1411,8 +1417,8 @@ void riscv_cpu_do_interrupt(CPUState *cs)
                   __func__, env->mhartid, async, cause, env->pc, tval,
                   riscv_cpu_get_trap_name(cause, async));
 
-    if riscv_has_ext(env, RVN) && env->priv == PRV_U &&
-            cause < TARGET_LONG_BITS && ((sdeleg >> cause) & 1) {
+    if (riscv_has_ext(env, RVN) && env->priv == PRV_U &&
+            cause < TARGET_LONG_BITS && ((sdeleg >> cause) & 1)) {
         s = env->mstatus;
         s = set_field(s, MSTATUS_UPIE, get_field(s, MSTATUS_UIE));
         s = set_field(s, MSTATUS_UIE, 0);
