@@ -76,6 +76,9 @@ config RISCV_APLIC
 config RISCV_IMSIC
     bool
 
+config RISCV_UINTC
+    bool
+
 config SIFIVE_PLIC
     bool
 

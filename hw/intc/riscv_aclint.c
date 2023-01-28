@@ -321,7 +321,6 @@ static uint64_t riscv_aclint_swi_read(void *opaque, hwaddr addr,
 {
     RISCVAclintSwiState *swi = opaque;
     if (addr < (swi->num_harts << 2)) {
-        qemu_log("SWI READ\n");
         size_t hartid = swi->hartid_base + (addr >> 2);
         CPUState *cpu = qemu_get_cpu(hartid);
         CPURISCVState *env = cpu ? cpu->env_ptr : NULL;
@@ -343,7 +342,6 @@ static void riscv_aclint_swi_write(void *opaque, hwaddr addr, uint64_t value,
         unsigned size)
 {
     RISCVAclintSwiState *swi = opaque;
-
     if (addr < (swi->num_harts << 2)) {
         size_t hartid = swi->hartid_base + (addr >> 2);
         CPUState *cpu = qemu_get_cpu(hartid);
@@ -353,11 +351,9 @@ static void riscv_aclint_swi_write(void *opaque, hwaddr addr, uint64_t value,
                           "aclint-swi: invalid hartid: %zu", hartid);
         } else if ((addr & 0x3) == 0) {
             if (value & 0x1) {
-                qemu_log("SWI RAISE %lx\n", hartid);
                 qemu_irq_raise(swi->soft_irqs[hartid - swi->hartid_base]);
             } else {
                 if (!swi->sswi) {
-                    qemu_log("SWI CLEAR %lx\n", hartid);
                     qemu_irq_lower(swi->soft_irqs[hartid - swi->hartid_base]);
                 }
             }
@@ -397,7 +393,6 @@ static void riscv_aclint_swi_realize(DeviceState *dev, Error **errp)
 
     swi->soft_irqs = g_new(qemu_irq, swi->num_harts);
     qdev_init_gpio_out(dev, swi->soft_irqs, swi->num_harts);
-    qemu_log("SWI REALIZE %x\n HARTS", swi->num_harts);
 
     /* Claim software interrupt bits */
     for (i = 0; i < swi->num_harts; i++) {

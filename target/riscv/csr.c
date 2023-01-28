@@ -2131,6 +2131,26 @@ static RISCVException rmw_sideleg(CPURISCVState *env, int csrno,
     return RISCV_EXCP_NONE;
 }
 
+static RISCVException read_suist(CPURISCVState *env, int csrno, target_ulong *val) {
+    *val = env->suist;
+    return RISCV_EXCP_NONE;
+}
+
+static RISCVException write_suist(CPURISCVState *env, int csrno, target_ulong val) {
+    env->suist = val;
+    return RISCV_EXCP_NONE;
+}
+
+static RISCVException read_suirs(CPURISCVState *env, int csrno, target_ulong *val) {
+    *val = env->suirs;
+    return RISCV_EXCP_NONE;
+}
+
+static RISCVException write_suirs(CPURISCVState *env, int csrno, target_ulong val) {
+    env->suirs = val;
+    return RISCV_EXCP_NONE;
+}
+
 /* Hypervisor Extensions */
 static RISCVException read_hstatus(CPURISCVState *env, int csrno,
                                    target_ulong *val)
@@ -3349,6 +3369,8 @@ riscv_csr_operations csr_ops[CSR_TABLE_SIZE] = {
     [CSR_UTVAL]    = { "utval",    nmode, read_utval,    write_utval    },
     [CSR_SIDELEG]  = { "sideleg",  nmode, NULL, NULL,    rmw_sideleg    },
     [CSR_SEDELEG]  = { "sedeleg",  nmode, read_sedeleg,  write_sedeleg  },
+    [CSR_SUIST]    = { "suist",    nmode, read_suist,    write_suist    },
+    [CSR_SUIRS]    = { "suirs",    nmode, read_suirs,    write_suirs    },
 
     [CSR_HSTATUS]     = { "hstatus",     hmode,   read_hstatus,     write_hstatus     },
     [CSR_HEDELEG]     = { "hedeleg",     hmode,   read_hedeleg,     write_hedeleg     },

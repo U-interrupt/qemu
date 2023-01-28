@@ -62,6 +62,7 @@ enum {
     VIRT_TEST,
     VIRT_RTC,
     VIRT_CLINT,
+    VIRT_UINTC,
     VIRT_ACLINT_SSWI,
     VIRT_PLIC,
     VIRT_APLIC_M,

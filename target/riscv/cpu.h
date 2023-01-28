@@ -207,6 +207,9 @@ struct CPUArchState {
     target_ulong sedeleg;
     target_ulong sideleg;
 
+    target_ulong suist;
+    target_ulong suirs;
+
     /* Machine and Supervisor interrupt priorities */
     uint8_t miprio[64];
     uint8_t siprio[64];

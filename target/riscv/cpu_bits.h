@@ -51,6 +51,10 @@
 #define CSR_UTVAL           0x043
 #define CSR_UIP             0x044
 
+/* User Interrupt Status */
+#define CSR_SUIST           0x1b0
+#define CSR_SUIRS           0x1b1
+
 /* User Floating-Point CSRs */
 #define CSR_FFLAGS          0x001
 #define CSR_FRM             0x002

@@ -20,6 +20,7 @@
 #include "qemu/osdep.h"
 #include "qemu/log.h"
 #include "qemu/main-loop.h"
+#include "qemu/error-report.h"
 #include "cpu.h"
 #include "exec/exec-all.h"
 #include "tcg/tcg-op.h"
@@ -1065,7 +1066,10 @@ restart:
 static void raise_mmu_exception(CPURISCVState *env, target_ulong address,
                                 MMUAccessType access_type, bool pmp_violation,
                                 bool first_stage, bool two_stage)
-{
+{   
+    qemu_log("RISCV raise_mmu_exception\n");
+    qemu_log_flush();
+
     CPUState *cs = env_cpu(env);
     int page_fault_exceptions, vm;
     uint64_t stap_mode;
@@ -1114,6 +1118,9 @@ static void raise_mmu_exception(CPURISCVState *env, target_ulong address,
     }
     env->badaddr = address;
     env->two_stage_lookup = two_stage;
+
+    qemu_log("RISCV raise_mmu_exception: %d\n", cs->exception_index);
+    qemu_log_flush();
 }
 
 hwaddr riscv_cpu_get_phys_page_debug(CPUState *cs, vaddr addr)
@@ -1145,6 +1152,9 @@ void riscv_cpu_do_transaction_failed(CPUState *cs, hwaddr physaddr,
                                      int mmu_idx, MemTxAttrs attrs,
                                      MemTxResult response, uintptr_t retaddr)
 {
+    qemu_log("riscv_cpu_do_transaction_failed!\n");
+    qemu_log_flush();
+
     RISCVCPU *cpu = RISCV_CPU(cs);
     CPURISCVState *env = &cpu->env;
 
@@ -1170,7 +1180,6 @@ void riscv_cpu_do_unaligned_access(CPUState *cs, vaddr addr,
     CPURISCVState *env = &cpu->env;
     switch (access_type) {
     case MMU_INST_FETCH:
-        qemu_log("FETCH %lX", addr);
         cs->exception_index = RISCV_EXCP_INST_ADDR_MIS;
         break;
     case MMU_DATA_LOAD:

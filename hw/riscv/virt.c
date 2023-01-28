@@ -36,6 +36,7 @@
 #include "hw/intc/riscv_aplic.h"
 #include "hw/intc/riscv_imsic.h"
 #include "hw/intc/sifive_plic.h"
+#include "hw/intc/riscv_uintc.h"
 #include "hw/misc/sifive_test.h"
 #include "chardev/char.h"
 #include "sysemu/device_tree.h"
@@ -87,6 +88,7 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_PCIE_ECAM] =   { 0x30000000,    0x10000000 },
     [VIRT_PCIE_MMIO] =   { 0x40000000,    0x40000000 },
     [VIRT_DRAM] =        { 0x80000000,           0x0 },
+    [VIRT_UINTC] =       { 0xC0000000,        0x4000 },
 };
 
 /* PCIe high mmio is fixed for RV32 */
@@ -282,6 +284,7 @@ static void create_fdt_socket_memory(RISCVVirtState *s,
 
     addr = memmap[VIRT_DRAM].base + riscv_socket_mem_offset(mc, socket);
     size = riscv_socket_mem_size(mc, socket);
+    info_report("FDT memory size 0x%lx\n", size);
     mem_name = g_strdup_printf("/memory@%lx", (long)addr);
     qemu_fdt_add_subnode(mc->fdt, mem_name);
     qemu_fdt_setprop_cells(mc->fdt, mem_name, "reg",
@@ -1197,6 +1200,8 @@ static void virt_machine_init(MachineState *machine)
             exit(1);
         }
 
+        error_report("SOCKET %d BASE %d COUNT %d\n", i, base_hartid, hart_count);
+
         soc_name = g_strdup_printf("soc%d", i);
         object_initialize_child(OBJECT(machine), soc_name, &s->soc[i],
                                 TYPE_RISCV_HART_ARRAY);
@@ -1249,6 +1254,9 @@ static void virt_machine_init(MachineState *machine)
                     RISCV_ACLINT_DEFAULT_TIMEBASE_FREQ, true);
             }
         }
+
+        riscv_uintc_create(memmap[VIRT_UINTC].base + i * memmap[VIRT_UINTC].size,
+            base_hartid, hart_count);
 
         /* Per-socket interrupt controller */
         if (s->aia_type == VIRT_AIA_TYPE_NONE) {
