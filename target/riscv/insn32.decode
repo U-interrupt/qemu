@@ -319,6 +319,9 @@ hlv_wu    0110100  00001   ..... 100 ..... 1110011 @r2
 hlv_d     0110110  00000   ..... 100 ..... 1110011 @r2
 hsv_d     0110111  .....   ..... 100 00000 1110011 @r2_s
 
+# *** RV64N Instruction Set ***
+uipi      ............ ..... 010 ..... 1111011 @i
+
 # *** Vector loads and stores are encoded within LOADFP/STORE-FP ***
 # Vector unit-stride load/store insns.
 vle8_v     ... 000 . 00000 ..... 000 ..... 0000111 @r2_nfvm

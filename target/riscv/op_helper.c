@@ -117,7 +117,7 @@ target_ulong helper_csrrw_i128(CPURISCVState *env, int csr,
 #ifndef CONFIG_USER_ONLY
 
 target_ulong helper_uret(CPURISCVState *env)
-{    
+{
     if (env->priv != PRV_U) {
         riscv_raise_exception(env, RISCV_EXCP_ILLEGAL_INST, GETPC());
     }
@@ -132,7 +132,6 @@ target_ulong helper_uret(CPURISCVState *env)
     mstatus = set_field(mstatus, MSTATUS_UPIE, 1);
     env->mstatus = mstatus; 
 
-    riscv_cpu_set_mode(env, PRV_U);
     return retpc;
 }
 

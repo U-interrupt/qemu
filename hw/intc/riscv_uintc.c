@@ -78,7 +78,7 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
                 }
                 return;
             case UINTC_WRITE_HIGH + 4:
-                if (!(uintc->uirs[index].mode & 0x2)) {
+                if (uintc->uirs[index].mode & 0x2) {
                     uintc->uirs[index].pending1 |= value << 32;
                     return;
                 } else {
