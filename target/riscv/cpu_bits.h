@@ -54,6 +54,7 @@
 /* User Interrupt Status */
 #define CSR_SUIST           0x1b0
 #define CSR_SUIRS           0x1b1
+#define CSR_SUICFG          0x1b2
 
 /* User Floating-Point CSRs */
 #define CSR_FFLAGS          0x001

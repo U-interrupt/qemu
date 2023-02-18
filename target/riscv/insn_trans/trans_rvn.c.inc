@@ -33,9 +33,30 @@ static bool trans_uret(DisasContext *ctx, arg_uret *a)
 
 static bool trans_uipi(DisasContext *ctx, arg_uipi *a)
 {
+
 #ifndef CONFIG_USER_ONLY
     if (has_ext(ctx, RVN)) {
-        // gen_helper_uipi_send(cpu_env);
+        TCGv addr = temp_new(ctx);
+        TCGv_i32 op = tcg_constant_i32(a->imm);
+        gen_helper_uipi_addr(addr, cpu_env, op);
+        switch (a->imm) {
+            case UIPI_SEND:
+                return true;
+
+            case UIPI_READ:
+                return true;
+                
+            case UIPI_WRITE:
+                TCGv data = get_gpr(ctx, a->rs1, EXT_NONE);
+                tcg_gen_qemu_st_tl(data, addr, ctx->mem_idx, MO_TEUQ);
+                return true;
+
+            case UIPI_ACTIVATE:
+                return true;
+
+            case UIPI_DEACTIVATE:
+                return true;
+        }
         return true;
     }
 #endif

@@ -105,6 +105,9 @@ DEF_HELPER_1(sret, tl, env)
 DEF_HELPER_1(mret, tl, env)
 DEF_HELPER_1(wfi, void, env)
 DEF_HELPER_1(tlb_flush, void, env)
+
+/* User Interrupt Helpers */
+DEF_HELPER_2(uipi_addr, tl, env, int)
 #endif
 
 /* Hypervisor functions */

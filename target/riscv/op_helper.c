@@ -18,10 +18,13 @@
  */
 
 #include "qemu/osdep.h"
+#include "qemu/log.h"
 #include "cpu.h"
+#include "tcg/tcg-op.h"
 #include "qemu/main-loop.h"
 #include "exec/exec-all.h"
 #include "exec/helper-proto.h"
+#include "exec/memop.h"
 
 /* Exceptions processing helpers */
 void QEMU_NORETURN riscv_raise_exception(CPURISCVState *env,
@@ -115,25 +118,6 @@ target_ulong helper_csrrw_i128(CPURISCVState *env, int csr,
 }
 
 #ifndef CONFIG_USER_ONLY
-
-target_ulong helper_uret(CPURISCVState *env)
-{
-    if (env->priv != PRV_U) {
-        riscv_raise_exception(env, RISCV_EXCP_ILLEGAL_INST, GETPC());
-    }
-
-    target_ulong retpc = env->uepc;
-    if (!riscv_has_ext(env, RVC) && (retpc & 0x3)) {
-        riscv_raise_exception(env, RISCV_EXCP_INST_ADDR_MIS, GETPC());
-    }
-    
-    uint64_t mstatus = env->mstatus;
-    mstatus = set_field(mstatus, MSTATUS_UIE, get_field(mstatus, MSTATUS_UPIE));
-    mstatus = set_field(mstatus, MSTATUS_UPIE, 1);
-    env->mstatus = mstatus; 
-
-    return retpc;
-}
 
 target_ulong helper_sret(CPURISCVState *env)
 {
@@ -309,6 +293,39 @@ target_ulong helper_hyp_hlvx_wu(CPURISCVState *env, target_ulong address)
     int mmu_idx = cpu_mmu_index(env, true) | TB_FLAGS_PRIV_HYP_ACCESS_MASK;
 
     return cpu_ldl_mmuidx_ra(env, address, mmu_idx, GETPC());
+}
+
+/* UIPI */
+
+target_ulong helper_uret(CPURISCVState *env)
+{
+    if (env->priv != PRV_U) {
+        riscv_raise_exception(env, RISCV_EXCP_ILLEGAL_INST, GETPC());
+    }
+
+    target_ulong retpc = env->uepc;
+    if (!riscv_has_ext(env, RVC) && (retpc & 0x3)) {
+        riscv_raise_exception(env, RISCV_EXCP_INST_ADDR_MIS, GETPC());
+    }
+    
+    uint64_t mstatus = env->mstatus;
+    mstatus = set_field(mstatus, MSTATUS_UIE, get_field(mstatus, MSTATUS_UPIE));
+    mstatus = set_field(mstatus, MSTATUS_UPIE, 1);
+    env->mstatus = mstatus; 
+
+    return retpc;
+}
+
+// void helper_uipi_send(CPURISCVState *env) {
+    
+// }
+
+target_ulong helper_uipi_addr(CPURISCVState *env, int op) {
+    if (uipi_enabled(env, env->suirs)) {
+        target_ulong uintc_addr = UINTC_REG_HIGH(env->suicfg, SUIRS_INDEX(env->suirs));
+        return uintc_addr;
+    }
+    return 0;
 }
 
 #endif /* !CONFIG_USER_ONLY */

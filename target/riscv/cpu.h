@@ -207,6 +207,7 @@ struct CPUArchState {
     target_ulong sedeleg;
     target_ulong sideleg;
 
+    target_ulong suicfg;
     target_ulong suist;
     target_ulong suirs;
 
@@ -687,5 +688,34 @@ void riscv_get_csr_ops(int csrno, riscv_csr_operations *ops);
 void riscv_set_csr_ops(int csrno, riscv_csr_operations *ops);
 
 void riscv_cpu_register_gdb_regs_for_features(CPUState *cs);
+
+/* User Interrupt Utils */
+
+/* UIPI opcode */
+#define UIPI_SEND       0
+#define UIPI_READ       1
+#define UIPI_WRITE      2
+#define UIPI_ACTIVATE   3
+#define UIPI_DEACTIVATE 4
+
+/* UINTC address map */
+#define UINTC_REG(__base, __index)      (__base + __index * 0x20)
+#define UINTC_REG_SEND(__base, __index)    (UINTC_REG(__base, __index) + 0x00)
+#define UINTC_REG_LOW(__base, __index)     (UINTC_REG(__base, __index) + 0x08)
+#define UINTC_REG_HIGH(__base, __index)    (UINTC_REG(__base, __index) + 0x10)
+#define UINTC_REG_ACTIVE(__base, __index)  (UINTC_REG(__base, __index) + 0x18)
+
+/* CSR fields */
+#define SUIRS_INDEX(suirs) (suirs & 0xffff)
+
+static inline bool uipi_enabled(CPURISCVState *env, target_ulong status) {
+    if (env->xl == MXL_RV32) {
+        return status >> 31;
+    } else if (env->xl == MXL_RV64) {
+        return status >> 63;
+    }
+
+    return false;
+}
 
 #endif /* RISCV_CPU_H */
