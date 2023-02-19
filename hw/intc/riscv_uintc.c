@@ -15,9 +15,9 @@ static uint64_t riscv_uintc_read(void *opaque, hwaddr addr, unsigned size)
 {
     RISCVUintcState *uintc = opaque;
 
-    qemu_log("RISCV UINTC READ: addr=0x%lx\n", addr);
 
-    if (addr < (uintc->num_harts << 5)) {
+    if (addr < (RISCV_UINTC_MAX_HARTS << 5)) {
+        qemu_log("RISCV UINTC READ: addr=0x%lx\n", addr);
         uint16_t index = addr >> 5;
         switch (addr & 0x1f) {
             case UINTC_READ_LOW:
@@ -51,18 +51,25 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
 {
     RISCVUintcState *uintc = opaque;
 
-    qemu_log("RISCV UINTC WRITE: addr=0x%lx value=0x%lx\n", addr, value);
 
-    if (addr < (uintc->num_harts << 5)) {
+    if (addr < (RISCV_UINTC_MAX_HARTS << 5)) {
+        qemu_log("RISCV UINTC WRITE: addr=0x%lx value=0x%lx\n", addr, value);
         uint16_t index = addr >> 5;
         switch (addr & 0x1f) {
             case UINTC_SEND:
-                uint16_t hartid = uintc->hartid_base + (addr >> 5);
+                uint16_t hartid = uintc->uirs[index].hartid;
                 CPUState *cpu = qemu_get_cpu(hartid);
                 CPURISCVState *env = cpu ? cpu->env_ptr : NULL;
                 if (!env) {
                     qemu_log_mask(LOG_GUEST_ERROR, "uintc: invalid hartid: %08x", (unsigned)hartid);
-                } else if (value && (uintc->uirs[index].mode & 0x1)) {
+                } else if (uintc->uirs[index].mode & 0x1) {
+                    if (uintc->uirs[index].mode & 0x2) {
+                        uintc->uirs[index].pending1 |= 1 << value;
+                    } else {
+                        uintc->uirs[index].pending0 |= 1 << value;
+                    }
+                    qemu_log("IPI to 0x%x\n", hartid);
+                    qemu_log_flush();
                     qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
                 }
                 return;
@@ -129,7 +136,7 @@ static void riscv_uintc_realize(DeviceState *dev, Error **errp)
 
     info_report("LOW 0x%x HIGH 0x%x", (uint32_t)uintc->mmio.addr, (uint32_t)uintc->mmio.size);
 
-    uintc->uirs = g_new0(RISCVUintcUIRS, uintc->num_harts);
+    uintc->uirs = g_new0(RISCVUintcUIRS, RISCV_UINTC_MAX_HARTS);
 
     /* Create output IRQ lines */
     uintc->soft_irqs = g_new(qemu_irq, uintc->num_harts);

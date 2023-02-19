@@ -707,6 +707,8 @@ void riscv_cpu_register_gdb_regs_for_features(CPUState *cs);
 
 /* CSR fields */
 #define SUIRS_INDEX(suirs) (suirs & 0xffff)
+#define SUIST_BASE(suist) ((suist & 0xfffffffffff) << 12)
+#define SUIST_SIZE(suist) (((suist >> 44) & 0xfff) << 12) // 4 KB page
 
 static inline bool uipi_enabled(CPURISCVState *env, target_ulong status) {
     if (env->xl == MXL_RV32) {

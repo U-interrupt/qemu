@@ -75,6 +75,7 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_RTC] =         {   0x101000,        0x1000 },
     [VIRT_CLINT] =       {  0x2000000,       0x10000 },
     [VIRT_ACLINT_SSWI] = {  0x2F00000,        0x4000 },
+    [VIRT_UINTC] =       {  0x2F10000,        0x4000 },
     [VIRT_PCIE_PIO] =    {  0x3000000,       0x10000 },
     [VIRT_PLIC] =        {  0xc000000, VIRT_PLIC_SIZE(VIRT_CPUS_MAX * 2) },
     [VIRT_APLIC_M] =     {  0xc000000, APLIC_SIZE(VIRT_CPUS_MAX) },
@@ -88,7 +89,6 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_PCIE_ECAM] =   { 0x30000000,    0x10000000 },
     [VIRT_PCIE_MMIO] =   { 0x40000000,    0x40000000 },
     [VIRT_DRAM] =        { 0x80000000,           0x0 },
-    [VIRT_UINTC] =       { 0xC0000000,        0x4000 },
 };
 
 /* PCIe high mmio is fixed for RV32 */
