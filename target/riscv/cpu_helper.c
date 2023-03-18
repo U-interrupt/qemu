@@ -401,19 +401,20 @@ static int riscv_cpu_local_irq_pending(CPURISCVState *env)
     /* Check M-mode interrupts */
     irqs = pending & ~env->mideleg & -mie;
     if (irqs) {
+        // qemu_log("riscv_cpu_local_irq_pending M-mode %lx %lx %lx\n", env->mideleg, env->sideleg, pending);
         return riscv_cpu_pending_to_irq(env, IRQ_M_EXT, IPRIO_DEFAULT_M,
                                         irqs, env->miprio);
     }
 
     /* Check HS-mode interrupts */
-    irqs = pending & env->mideleg & ~env->hideleg & -hsie;
+    irqs = pending & env->mideleg & ~env->hideleg & ~env->sideleg & -hsie;
     if (irqs) {
         return riscv_cpu_pending_to_irq(env, IRQ_S_EXT, IPRIO_DEFAULT_S,
                                         irqs, env->siprio);
     }
 
     /* Check VS-mode interrupts */
-    irqs = pending & env->mideleg & env->hideleg & -vsie;
+    irqs = pending & env->mideleg & env->hideleg & ~env->sideleg & -vsie;
     if (irqs) {
         virq = riscv_cpu_pending_to_irq(env, IRQ_S_EXT, IPRIO_DEFAULT_S,
                                         irqs >> 1, env->hviprio);
@@ -425,6 +426,7 @@ static int riscv_cpu_local_irq_pending(CPURISCVState *env)
     /* Check U-mode interrupts */
     irqs = pending & env->sideleg & -uie;
     if (irqs) {
+        // qemu_log("riscv_cpu_local_irq_pending U-mode\n");
         // TODO: AIA is not supported
         return riscv_cpu_pending_to_irq(env, IRQ_U_EXT, IPRIO_MMAXIPRIO, irqs, NULL);
     }
@@ -440,6 +442,7 @@ bool riscv_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
         CPURISCVState *env = &cpu->env;
         int interruptno = riscv_cpu_local_irq_pending(env);
         if (interruptno >= 0) {
+            // qemu_log("riscv_cpu_exec_interrupt\n");
             cs->exception_index = RISCV_EXCP_INT_FLAG | interruptno;
             riscv_cpu_do_interrupt(cs);
             return true;
@@ -1428,6 +1431,7 @@ void riscv_cpu_do_interrupt(CPUState *cs)
 
     if (riscv_has_ext(env, RVN) && env->priv == PRV_U &&
             cause < TARGET_LONG_BITS && ((sdeleg >> cause) & 1)) {
+        qemu_log("U-mode! %lx %lx %lx %d %lx\n", env->pc, cause, sdeleg, async, env->mip);
         s = env->mstatus;
         s = set_field(s, MSTATUS_UPIE, get_field(s, MSTATUS_UIE));
         s = set_field(s, MSTATUS_UIE, 0);

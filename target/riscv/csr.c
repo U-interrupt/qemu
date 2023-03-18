@@ -2012,7 +2012,8 @@ static RISCVException read_ustatus(CPURISCVState *env, int csrno, target_ulong *
 }
 
 static RISCVException write_ustatus(CPURISCVState *env, int csrno, target_ulong val)
-{
+{   
+    qemu_log("write_ustatus %lx\n", val);
     target_ulong newval = (env->mstatus & ~ustatus_mask) | (val & ustatus_mask);
     return write_mstatus(env, CSR_MSTATUS, newval);
 }

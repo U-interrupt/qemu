@@ -177,6 +177,22 @@ target_ulong helper_sret(CPURISCVState *env)
 
     riscv_cpu_set_mode(env, prev_priv);
 
+    /* User interrupt trigger */
+    if (riscv_has_ext(env, RVN)
+        && prev_priv == PRV_U
+        && get_field(env->mip, MIP_USIP)
+        && get_field(env->mstatus, MSTATUS_UIE)
+        && get_field(env->sideleg, MIP_USIP)) {
+        qemu_log("sret raise user interrupt %lx %lx\n", env->utvec, env->sepc);
+        retpc = env->utvec;
+        env->uepc = env->sepc;
+
+        mstatus = env->mstatus;
+        mstatus = set_field(mstatus, MSTATUS_UPIE, 1);
+        mstatus = set_field(mstatus, MSTATUS_UIE, 0);
+        env->mstatus = mstatus;
+    }
+
     return retpc;
 }
 
@@ -313,6 +329,20 @@ target_ulong helper_uret(CPURISCVState *env)
     mstatus = set_field(mstatus, MSTATUS_UPIE, 1);
     env->mstatus = mstatus; 
 
+    /* User interrupt trigger */
+    if (riscv_has_ext(env, RVN)
+        && get_field(env->mip, MIP_USIP)
+        && get_field(env->mstatus, MSTATUS_UIE)
+        && get_field(env->sideleg, MIP_USIP)) {
+        qemu_log("uret raise user interrupt %lx %lx\n", env->utvec, env->uepc);
+        retpc = env->utvec;
+
+        mstatus = env->mstatus;
+        mstatus = set_field(mstatus, MSTATUS_UPIE, 1);
+        mstatus = set_field(mstatus, MSTATUS_UIE, 0);
+        env->mstatus = mstatus;
+    }
+
     return retpc;
 }
 
@@ -350,11 +380,13 @@ target_ulong helper_uipi(CPURISCVState *env, int op, target_ulong src) {
                     cpu_physical_memory_write(addr, &src, 8);
                     break;
                 case UIPI_ACTIVATE:
+                    qemu_log("UIPI_ACTIVATE\n");
                     data = 0x1;
                     addr = UINTC_REG_ACTIVE(env->suicfg, SUIRS_INDEX(env->suirs));
                     cpu_physical_memory_write(addr, &data, 8);
                     break;
                 case UIPI_DEACTIVATE:
+                    qemu_log("UIPI_DEACTIVATE\n");
                     data = 0x0;
                     addr = UINTC_REG_ACTIVE(env->suicfg, SUIRS_INDEX(env->suirs));
                     cpu_physical_memory_write(addr, &data, 8);
