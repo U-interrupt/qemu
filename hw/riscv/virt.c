@@ -475,6 +475,41 @@ static void create_fdt_socket_plic(RISCVVirtState *s,
     g_free(plic_cells);
 }
 
+static void create_fdt_socket_uintc(RISCVVirtState *s,
+                                    const MemMapEntry *memmap, int socket,
+                                    uint32_t *phandle,
+                                    uint32_t *intc_phandles) {
+    int cpu;
+    char *uintc_name;
+    uint32_t *uintc_cells;
+    unsigned long uintc_addr;
+    MachineState *mc = MACHINE(s);
+    static const char *const uintc_compat[1] = {"riscv,uintc0"};
+
+    uintc_cells = g_new0(uint32_t, s->soc[socket].num_harts * 2);
+
+    for (cpu = 0; cpu < s->soc[socket].num_harts; cpu++) {
+        uintc_cells[cpu * 2 + 0] = cpu_to_be32(intc_phandles[cpu]);
+        uintc_cells[cpu * 2 + 1] = cpu_to_be32(IRQ_U_SOFT);
+    }
+
+    uintc_addr = memmap[VIRT_UINTC].base + (memmap[VIRT_UINTC].size * socket);
+    uintc_name = g_strdup_printf("/soc/uintc@%lx", uintc_addr);
+    qemu_fdt_add_subnode(mc->fdt, uintc_name);
+    qemu_fdt_setprop_string_array(mc->fdt, uintc_name, "compatible",
+                                  (char **)&uintc_compat,
+                                  ARRAY_SIZE(uintc_compat));
+    qemu_fdt_setprop(mc->fdt, uintc_name, "interrupt-controller", NULL, 0);
+    qemu_fdt_setprop_cells(mc->fdt, uintc_name, "reg", 0x0, uintc_addr, 0x0,
+                           memmap[VIRT_UINTC].size);
+    qemu_fdt_setprop(mc->fdt, uintc_name, "interrupts-extended", uintc_cells,
+                     s->soc[socket].num_harts * sizeof(uint32_t) * 2);
+    riscv_socket_fdt_write_id(mc, mc->fdt, uintc_name, socket);
+    g_free(uintc_name);
+
+    g_free(uintc_cells);
+}
+
 static uint32_t imsic_num_bits(uint32_t count)
 {
     uint32_t ret = 0;
@@ -755,6 +790,9 @@ static void create_fdt_sockets(RISCVVirtState *s, const MemMapEntry *memmap,
                 msi_m_phandle, msi_s_phandle, phandle,
                 &intc_phandles[phandle_pos], xplic_phandles);
         }
+
+        create_fdt_socket_uintc(s, memmap, socket, phandle,
+                                &intc_phandles[phandle_pos]);
     }
 
     g_free(intc_phandles);

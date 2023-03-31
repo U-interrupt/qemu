@@ -16,3 +16,6 @@ GTAGS
 *.swp
 *.patch
 *.gcov
+
+*.json
+.cache/

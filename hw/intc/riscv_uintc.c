@@ -56,7 +56,7 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
         qemu_log("RISCV UINTC WRITE: addr=0x%lx value=0x%lx\n", addr, value);
         uint16_t index = addr >> 5;
         switch (addr & 0x1f) {
-            case UINTC_SEND:
+            case UINTC_SEND: {
                 uint16_t hartid = uintc->uirs[index].hartid;
                 CPUState *cpu = qemu_get_cpu(hartid);
                 CPURISCVState *env = cpu ? cpu->env_ptr : NULL;
@@ -73,6 +73,7 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
                     qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
                 }
                 return;
+            }
             case UINTC_WRITE_LOW:
                 uintc->uirs[index].hartid = value >> 16;
                 uintc->uirs[index].mode = value & 0x3;
