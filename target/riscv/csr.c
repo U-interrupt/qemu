@@ -2133,37 +2133,31 @@ static RISCVException rmw_sideleg(CPURISCVState *env, int csrno,
 }
 
 static RISCVException read_suicfg(CPURISCVState *env, int csrno, target_ulong *val) {
-    qemu_log("READ suicfg\n");
     *val = env->suicfg;
     return RISCV_EXCP_NONE;
 }
 
 static RISCVException write_suicfg(CPURISCVState *env, int csrno, target_ulong val) {
-    qemu_log("WRITE suicfg\n");
     env->suicfg = val;
     return RISCV_EXCP_NONE;
 }
 
 static RISCVException read_suist(CPURISCVState *env, int csrno, target_ulong *val) {
-    qemu_log("READ suist\n");
     *val = env->suist;
     return RISCV_EXCP_NONE;
 }
 
 static RISCVException write_suist(CPURISCVState *env, int csrno, target_ulong val) {
-    qemu_log("WRITE suist\n");
     env->suist = val;
     return RISCV_EXCP_NONE;
 }
 
 static RISCVException read_suirs(CPURISCVState *env, int csrno, target_ulong *val) {
-    qemu_log("READ suirs\n");
     *val = env->suirs;
     return RISCV_EXCP_NONE;
 }
 
 static RISCVException write_suirs(CPURISCVState *env, int csrno, target_ulong val) {
-    qemu_log("WRITE suirs\n");
     env->suirs = val;
     return RISCV_EXCP_NONE;
 }

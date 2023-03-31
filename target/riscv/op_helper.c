@@ -355,9 +355,9 @@ target_ulong helper_uipi(CPURISCVState *env, int op, target_ulong src) {
             if (uiste_addr < uist_end) {
                 uint64_t uiste;
                 cpu_physical_memory_read(uiste_addr, &uiste, 16);
-                qemu_log("uiste_addr uiste 0x%lx 0x%lx\n", uiste_addr, uiste);
                 uint64_t uirs_index = (uiste >> 48) & 0xffff;
                 uint64_t sender_vec = (uiste >> 16) & 0xffff;
+                qemu_log("uiste_addr uiste 0x%lx 0x%lx\n", uiste_addr, uiste);
                 if (uiste & 0x1) {
                     uint64_t uintc_addr = UINTC_REG_SEND(env->suicfg, uirs_index);
                     cpu_physical_memory_write(uintc_addr, &sender_vec, 8);

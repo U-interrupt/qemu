@@ -1070,7 +1070,6 @@ static void raise_mmu_exception(CPURISCVState *env, target_ulong address,
                                 MMUAccessType access_type, bool pmp_violation,
                                 bool first_stage, bool two_stage)
 {   
-    qemu_log("RISCV raise_mmu_exception\n");
     qemu_log_flush();
 
     CPUState *cs = env_cpu(env);
@@ -1122,7 +1121,6 @@ static void raise_mmu_exception(CPURISCVState *env, target_ulong address,
     env->badaddr = address;
     env->two_stage_lookup = two_stage;
 
-    qemu_log("RISCV raise_mmu_exception: %d\n", cs->exception_index);
     qemu_log_flush();
 }
 
