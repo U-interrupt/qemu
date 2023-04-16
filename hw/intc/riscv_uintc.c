@@ -19,19 +19,24 @@ static uint64_t riscv_uintc_read(void *opaque, hwaddr addr, unsigned size)
     if (addr < (RISCV_UINTC_MAX_HARTS << 5)) {
         qemu_log("RISCV UINTC READ: addr=0x%lx\n", addr);
         uint16_t index = addr >> 5;
+        uint32_t pending;
         switch (addr & 0x1f) {
             case UINTC_READ_LOW:
                 return (uint64_t)uintc->uirs[index].hartid << 16 |
                     uintc->uirs[index].mode;
             case UINTC_READ_HIGH:
                 if (uintc->uirs[index].mode & 0x2) {
-                    return uintc->uirs[index].pending1;
+                    pending = uintc->uirs[index].pending1;
                 } else {
-                    return (uint32_t)uintc->uirs[index].pending0;
+                    pending =uintc->uirs[index].pending0;
+                    uintc->uirs[index].pending0 = 0;
                 }
+                return pending;
             case UINTC_READ_HIGH + 4:
                 if (!(uintc->uirs[index].mode & 0x2)) {
-                    return (uint32_t)(uintc->uirs[index].pending1 >> 32);
+                    pending = uintc->uirs[index].pending1 >> 32;
+                    uintc->uirs[index].pending1 = 0;
+                    return pending;
                 }
                 break;
             case UINTC_GET_ACTIVE:
@@ -80,9 +85,9 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
                 return;
             case UINTC_WRITE_HIGH:
                 if (uintc->uirs[index].mode & 0x2) {
-                    uintc->uirs[index].pending1 = value;
+                    uintc->uirs[index].pending1 |= value;
                 } else {
-                    uintc->uirs[index].pending0 = (uint32_t)value;
+                    uintc->uirs[index].pending0 |= (uint32_t)value;
                 }
                 return;
             case UINTC_WRITE_HIGH + 4:
