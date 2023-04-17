@@ -17,7 +17,7 @@ static uint64_t riscv_uintc_read(void *opaque, hwaddr addr, unsigned size)
 
 
     if (addr < (RISCV_UINTC_MAX_HARTS << 5)) {
-        qemu_log("RISCV UINTC READ: addr=0x%lx\n", addr);
+        qemu_log_mask(LOG_UNIMP, "RISCV UINTC READ: addr=0x%lx\n", addr);
         uint16_t index = addr >> 5;
         uint32_t pending;
         switch (addr & 0x1f) {
@@ -33,12 +33,12 @@ static uint64_t riscv_uintc_read(void *opaque, hwaddr addr, unsigned size)
                 }
                 return pending;
             case UINTC_READ_HIGH + 4:
-                if (!(uintc->uirs[index].mode & 0x2)) {
+                if (uintc->uirs[index].mode & 0x2) {
                     pending = uintc->uirs[index].pending1 >> 32;
                     uintc->uirs[index].pending1 = 0;
                     return pending;
                 }
-                break;
+                return 0;
             case UINTC_GET_ACTIVE:
                 return uintc->uirs[index].mode & 0x1;
             case UINTC_READ_LOW + 4:
@@ -58,7 +58,7 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
 
 
     if (addr < (RISCV_UINTC_MAX_HARTS << 5)) {
-        qemu_log("RISCV UINTC WRITE: addr=0x%lx value=0x%lx\n", addr, value);
+        qemu_log_mask(LOG_UNIMP, "RISCV UINTC WRITE: addr=0x%lx value=0x%lx\n", addr, value);
         uint16_t index = addr >> 5;
         switch (addr & 0x1f) {
             case UINTC_SEND: {
@@ -73,7 +73,7 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
                     } else {
                         uintc->uirs[index].pending0 |= 1 << value;
                     }
-                    qemu_log("IPI to 0x%x\n", hartid);
+                    qemu_log("IPI to 0x%x vec=%ld\n", hartid, value);
                     qemu_log_flush();
                     qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
                 }
@@ -92,6 +92,7 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
                 return;
             case UINTC_WRITE_HIGH + 4:
                 if (uintc->uirs[index].mode & 0x2) {
+                    qemu_log_mask(LOG_UNIMP, "RISCV UINTC after WRITE value=0x%lx\n", uintc->uirs[index].pending1);
                     uintc->uirs[index].pending1 |= value << 32;
                     return;
                 } else {
