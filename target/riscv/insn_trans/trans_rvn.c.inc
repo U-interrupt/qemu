@@ -31,19 +31,65 @@ static bool trans_uret(DisasContext *ctx, arg_uret *a)
     return false;
 }
 
-static bool trans_uipi(DisasContext *ctx, arg_uipi *a)
+static bool trans_uipi_send(DisasContext *ctx, arg_uipi_send *a)
+{
+
+#ifndef CONFIG_USER_ONLY
+    if (has_ext(ctx, RVN)) {
+        TCGv src = get_gpr(ctx, a->rs1, EXT_NONE);
+        gen_helper_uipi_send(cpu_env, src);
+        return true;
+    }
+#endif
+    return false;
+}
+
+static bool trans_uipi_read(DisasContext *ctx, arg_uipi_read *a)
 {
 
 #ifndef CONFIG_USER_ONLY
     if (has_ext(ctx, RVN)) {
         TCGv data = temp_new(ctx);
+        gen_helper_uipi_read(data, cpu_env);
+        TCGv dest = dest_gpr(ctx, a->rd);
+        tcg_gen_mov_tl(dest, data);
+        return true;
+    }
+#endif
+    return false;
+}
+
+static bool trans_uipi_write(DisasContext *ctx, arg_uipi_write *a)
+{
+
+#ifndef CONFIG_USER_ONLY
+    if (has_ext(ctx, RVN)) {
         TCGv src = get_gpr(ctx, a->rs1, EXT_NONE);
-        TCGv_i32 op = tcg_constant_i32(a->imm);
-        gen_helper_uipi(data, cpu_env, op, src);
-        if (a->imm == UIPI_READ) {
-            TCGv dest = dest_gpr(ctx, a->rd);
-            tcg_gen_mov_tl(dest, data);
-        }
+        gen_helper_uipi_write(cpu_env, src);
+        return true;
+    }
+#endif
+    return false;
+}
+
+static bool trans_uipi_activate(DisasContext *ctx, arg_uipi_activate *a)
+{
+
+#ifndef CONFIG_USER_ONLY
+    if (has_ext(ctx, RVN)) {
+        gen_helper_uipi_activate(cpu_env);
+        return true;
+    }
+#endif
+    return false;
+}
+
+static bool trans_uipi_deactivate(DisasContext *ctx, arg_uipi_deactivate *a)
+{
+
+#ifndef CONFIG_USER_ONLY
+    if (has_ext(ctx, RVN)) {
+        gen_helper_uipi_deactivate(cpu_env);
         return true;
     }
 #endif

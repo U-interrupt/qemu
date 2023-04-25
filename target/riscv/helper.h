@@ -107,7 +107,11 @@ DEF_HELPER_1(wfi, void, env)
 DEF_HELPER_1(tlb_flush, void, env)
 
 /* User Interrupt Helpers */
-DEF_HELPER_3(uipi, tl, env, int, tl)
+DEF_HELPER_2(uipi_send, void, env, tl)
+DEF_HELPER_1(uipi_read, tl, env)
+DEF_HELPER_2(uipi_write, void, env, tl)
+DEF_HELPER_1(uipi_activate, void, env)
+DEF_HELPER_1(uipi_deactivate, void ,env)
 #endif
 
 /* Hypervisor functions */
