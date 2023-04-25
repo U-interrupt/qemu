@@ -1429,7 +1429,7 @@ void riscv_cpu_do_interrupt(CPUState *cs)
 
     if (riscv_has_ext(env, RVN) && env->priv == PRV_U &&
             cause < TARGET_LONG_BITS && ((sdeleg >> cause) & 1)) {
-        qemu_log("U-mode! %lx %lx %lx %d %lx\n", env->pc, cause, sdeleg, async, env->mip);
+        qemu_log_mask(LOG_UNIMP, "U-mode! %lx %lx %lx %d %lx\n", env->pc, cause, sdeleg, async, env->mip);
         s = env->mstatus;
         s = set_field(s, MSTATUS_UPIE, get_field(s, MSTATUS_UIE));
         s = set_field(s, MSTATUS_UIE, 0);

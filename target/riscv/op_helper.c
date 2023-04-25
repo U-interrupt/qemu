@@ -183,7 +183,7 @@ target_ulong helper_sret(CPURISCVState *env)
         && get_field(env->mip, MIP_USIP)
         && get_field(env->mstatus, MSTATUS_UIE)
         && get_field(env->sideleg, MIP_USIP)) {
-        qemu_log("sret raise user interrupt %lx %lx\n", env->utvec, env->sepc);
+        qemu_log_mask(LOG_UNIMP, "sret raise user interrupt %lx %lx\n", env->utvec, env->sepc);
         retpc = env->utvec;
         env->uepc = env->sepc;
 
@@ -334,7 +334,7 @@ target_ulong helper_uret(CPURISCVState *env)
         && get_field(env->mip, MIP_USIP)
         && get_field(env->mstatus, MSTATUS_UIE)
         && get_field(env->sideleg, MIP_USIP)) {
-        qemu_log("uret raise user interrupt %lx %lx\n", env->utvec, env->uepc);
+        qemu_log_mask(LOG_UNIMP, "uret raise user interrupt %lx %lx\n", env->utvec, env->uepc);
         retpc = env->utvec;
 
         mstatus = env->mstatus;

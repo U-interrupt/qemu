@@ -67,16 +67,20 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
                 CPURISCVState *env = cpu ? cpu->env_ptr : NULL;
                 if (!env) {
                     qemu_log_mask(LOG_GUEST_ERROR, "uintc: invalid hartid: %08x", (unsigned)hartid);
-                } else if (uintc->uirs[index].mode & 0x1) {
+                } else {
                     if (uintc->uirs[index].mode & 0x2) {
                         uintc->uirs[index].pending1 |= 1 << value;
                     } else {
                         uintc->uirs[index].pending0 |= 1 << value;
                     }
-                    qemu_log("IPI to 0x%x vec=%ld\n", hartid, value);
-                    qemu_log_flush();
-                    qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
+
+                    if (uintc->uirs[index].mode & 0x1) {
+                        qemu_log_mask(LOG_UNIMP, "IPI to 0x%x vec=%ld\n", hartid, value);
+                        qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
+                    }
                 }
+                
+                
                 return;
             }
             case UINTC_WRITE_LOW:
