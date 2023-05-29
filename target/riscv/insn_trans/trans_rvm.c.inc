@@ -410,6 +410,7 @@ static bool trans_divud(DisasContext *ctx, arg_divud *a)
     return gen_arith(ctx, a, EXT_ZERO, gen_divu, NULL);
 }
 
+/*
 static bool trans_remd(DisasContext *ctx, arg_remd *a)
 {
     REQUIRE_128BIT(ctx);
@@ -417,6 +418,7 @@ static bool trans_remd(DisasContext *ctx, arg_remd *a)
     ctx->ol = MXL_RV64;
     return gen_arith(ctx, a, EXT_SIGN, gen_rem, NULL);
 }
+*/
 
 static bool trans_remud(DisasContext *ctx, arg_remud *a)
 {
