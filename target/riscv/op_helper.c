@@ -357,7 +357,7 @@ void helper_uipi_send(CPURISCVState *env, target_ulong src) {
             uint64_t sender_vec = (uiste >> 16) & 0xffff;
             qemu_log_mask(LOG_UNIMP, "uiste_addr uiste 0x%lx 0x%lx\n", uiste_addr, uiste);
             if (uiste & 0x1) {
-                uint64_t uintc_addr = UINTC_REG_SEND(env->suicfg, uirs_index);
+                uint64_t uintc_addr = UINTC_REG_SEND(uirs_index);
                 cpu_physical_memory_write(uintc_addr, &sender_vec, 8);
             }
         }
@@ -367,7 +367,7 @@ void helper_uipi_send(CPURISCVState *env, target_ulong src) {
 target_ulong helper_uipi_read(CPURISCVState *env) {
     if (uipi_enabled(env, env->suirs)) {
         uint64_t data, addr;
-        addr = UINTC_REG_HIGH(env->suicfg, SUIRS_INDEX(env->suirs));
+        addr = UINTC_REG_HIGH(SUIRS_INDEX(env->suirs));
         cpu_physical_memory_read(addr, &data, 8);
         qemu_log_mask(LOG_UNIMP, "UIPI_READ 0x%lx uirs_index=%lx data=%lx\n", addr, env->suirs & 0xffff, data);
         return data;
@@ -377,7 +377,7 @@ target_ulong helper_uipi_read(CPURISCVState *env) {
 
 void helper_uipi_write(CPURISCVState *env, target_ulong src) {
     if (uipi_enabled(env, env->suirs)) {
-        uint64_t addr = UINTC_REG_HIGH(env->suicfg, SUIRS_INDEX(env->suirs));
+        uint64_t addr = UINTC_REG_HIGH(SUIRS_INDEX(env->suirs));
         qemu_log_mask(LOG_UNIMP, "UIPI_WRITE 0x%lx\n", addr);
         cpu_physical_memory_write(addr, &src, 8);
     }
@@ -388,7 +388,7 @@ void helper_uipi_activate(CPURISCVState *env) {
         uint64_t data, addr;
         qemu_log_mask(LOG_UNIMP, "UIPI_ACTIVATE\n");
         data = 0x1;
-        addr = UINTC_REG_ACTIVE(env->suicfg, SUIRS_INDEX(env->suirs));
+        addr = UINTC_REG_ACTIVE(SUIRS_INDEX(env->suirs));
         cpu_physical_memory_write(addr, &data, 8);
     }
 }
@@ -398,7 +398,7 @@ void helper_uipi_deactivate(CPURISCVState *env) {
         uint64_t data, addr;
         qemu_log_mask(LOG_UNIMP, "UIPI_DEACTIVATE\n");
         data = 0x0;
-        addr = UINTC_REG_ACTIVE(env->suicfg, SUIRS_INDEX(env->suirs));
+        addr = UINTC_REG_ACTIVE(SUIRS_INDEX(env->suirs));
         cpu_physical_memory_write(addr, &data, 8);
     }
 }

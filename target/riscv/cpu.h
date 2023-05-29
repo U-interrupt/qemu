@@ -699,11 +699,11 @@ void riscv_cpu_register_gdb_regs_for_features(CPUState *cs);
 #define UIPI_DEACTIVATE 4
 
 /* UINTC address map */
-#define UINTC_REG(__base, __index)      (__base + __index * 0x20)
-#define UINTC_REG_SEND(__base, __index)    (UINTC_REG(__base, __index) + 0x00)
-#define UINTC_REG_LOW(__base, __index)     (UINTC_REG(__base, __index) + 0x08)
-#define UINTC_REG_HIGH(__base, __index)    (UINTC_REG(__base, __index) + 0x10)
-#define UINTC_REG_ACTIVE(__base, __index)  (UINTC_REG(__base, __index) + 0x18)
+#define UINTC_REG(__index)      (0x2F10000 + __index * 0x20)
+#define UINTC_REG_SEND(__index)    (UINTC_REG(__index) + 0x00)
+#define UINTC_REG_LOW(__index)     (UINTC_REG(__index) + 0x08)
+#define UINTC_REG_HIGH(__index)    (UINTC_REG(__index) + 0x10)
+#define UINTC_REG_ACTIVE(__index)  (UINTC_REG(__index) + 0x18)
 
 /* CSR fields */
 #define SUIRS_INDEX(suirs) (suirs & 0xffff)
