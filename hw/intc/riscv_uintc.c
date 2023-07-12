@@ -65,72 +65,46 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
         CPURISCVState *env = cpu ? cpu->env_ptr : NULL;
         switch (addr & 0x1f) {
             case UINTC_SEND: {
-                if (!env) {
-                    qemu_log_mask(LOG_GUEST_ERROR, "uintc: invalid hartid: %08x", (unsigned)hartid);
+                if (uintc->uirs[index].mode & 0x2) {
+                    uintc->uirs[index].pending1 |= 1 << value;
                 } else {
-                    if (uintc->uirs[index].mode & 0x2) {
-                        uintc->uirs[index].pending1 |= 1 << value;
-                    } else {
-                        uintc->uirs[index].pending0 |= 1 << value;
-                    }
-
-                    if (uintc->uirs[index].mode & 0x1) {
-                        qemu_log_mask(LOG_UNIMP, "IPI to 0x%x vec=%ld\n", hartid, value);
-                        qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
-                    }
+                    uintc->uirs[index].pending0 |= 1 << value;
                 }
-                return;
+                break;
             }
             case UINTC_WRITE_LOW:
                 uintc->uirs[index].hartid = value >> 16;
                 uintc->uirs[index].mode = value & 0x3;
-                if (value & 0x1)
-                    if (uintc->uirs[index].pending1) {
-                        qemu_log_mask(LOG_UNIMP, "IPI to 0x%x vec=%ld\n", hartid, value);
-                        qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
-                    }
-                return;
+                break;
             case UINTC_WRITE_HIGH:
                 if (uintc->uirs[index].mode & 0x2) {
                     uintc->uirs[index].pending1 |= value;
-                    if (value)
-                        if (uintc->uirs[index].mode & 0x1) {
-                            qemu_log_mask(LOG_UNIMP, "IPI to 0x%x vec=%ld\n", hartid, value);
-                            qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
-                        }
                 } else {
                     uintc->uirs[index].pending0 |= (uint32_t)value;
                 }
-                return;
+                break;
             case UINTC_WRITE_HIGH + 4:
                 if (uintc->uirs[index].mode & 0x2) {
                     uintc->uirs[index].pending1 |= value << 32;
-                    if (value)
-                        if (uintc->uirs[index].mode & 0x1) {
-                            qemu_log_mask(LOG_UNIMP, "IPI to 0x%x vec=%ld\n", hartid, value);
-                            qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
-                        }
                 } 
-                return;
+                break;
             case UINTC_SET_ACTIVE:
                 if (value) {
                     uintc->uirs[index].mode |= 0x1;
-                    if (uintc->uirs[index].pending1) {
-                        qemu_log_mask(LOG_UNIMP, "IPI to 0x%x vec=%ld\n", hartid, value);
-                        qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
-                    }
                 } else {
                     uintc->uirs[index].mode &= 0xfffe;
                 }
-                return;
-            case UINTC_SEND + 4:
-            case UINTC_WRITE_LOW + 4:
-            case UINTC_SET_ACTIVE + 4:
-                return;
+                break;
+            default:
+                break;
+        }
+
+        /* 64BIT */
+        if (uintc->uirs[index].mode == 0x3 && uintc->uirs[index].pending1 != 0 && env) {
+            qemu_log_mask(LOG_UNIMP, "IPI to Hart %x Pending %ld\n", hartid, uintc->uirs[index].pending1);
+            qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
         }
     }
-
-    qemu_log_mask(LOG_UNIMP, "uintc: invalid write: 0x%lx\n", addr);
 }
 
 static const MemoryRegionOps riscv_uintc_ops = {
