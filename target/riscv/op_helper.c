@@ -348,6 +348,7 @@ target_ulong helper_uret(CPURISCVState *env)
 
 void helper_uipi_send(CPURISCVState *env, target_ulong src) {
     if (uipi_enabled(env, env->suist)) {
+        qemu_log_mask(LOG_UNIMP, "UIPI_SEND index=0x%lx\n ", src);
         target_ulong uist_end = SUIST_BASE(env->suist) + SUIST_SIZE(env->suist);
         target_ulong uiste_addr = SUIST_BASE(env->suist) + (src << 6);
         if (uiste_addr < uist_end) {

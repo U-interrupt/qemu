@@ -63,6 +63,7 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
         uint16_t hartid = uintc->uirs[index].hartid;
         CPUState *cpu = qemu_get_cpu(hartid);
         CPURISCVState *env = cpu ? cpu->env_ptr : NULL;
+        bool trigger = 1;
         switch (addr & 0x1f) {
             case UINTC_SEND: {
                 if (uintc->uirs[index].mode & 0x2) {
@@ -96,11 +97,12 @@ static void riscv_uintc_write(void *opaque, hwaddr addr, uint64_t value,
                 }
                 break;
             default:
+                trigger = 0;
                 break;
         }
 
         /* 64BIT */
-        if (uintc->uirs[index].mode == 0x3 && uintc->uirs[index].pending1 != 0 && env) {
+        if (uintc->uirs[index].mode == 0x3 && uintc->uirs[index].pending1 != 0 && env && trigger) {
             qemu_log_mask(LOG_UNIMP, "IPI to Hart %x Pending %ld\n", hartid, uintc->uirs[index].pending1);
             qemu_irq_raise(uintc->soft_irqs[uintc->uirs[index].hartid - uintc->hartid_base]);
         }
